@@ -5,6 +5,17 @@ namespace PaymentGateway.Api.Mappers
 {
     public static class PaymentMapper
     {
+        public static Payment ToDomain(this PostPaymentResponse request)
+        {
+            return new Payment(
+            request.Id,
+            request.CardNumberLastFour,
+            request.ExpiryMonth,
+            request.ExpiryYear,
+            request.Currency,
+            request.Amount);
+        }
+
         public static PostPaymentResponse ToPostResponse(this Payment payment)
         {
             return new PostPaymentResponse
