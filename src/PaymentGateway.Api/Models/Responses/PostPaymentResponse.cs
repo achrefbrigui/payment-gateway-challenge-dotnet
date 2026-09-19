@@ -1,5 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 
+using PaymentGateway.Api.Domain.Enums;
+
 namespace PaymentGateway.Api.Models.Responses;
 
 public class PostPaymentResponse
