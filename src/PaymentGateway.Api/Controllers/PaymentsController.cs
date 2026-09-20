@@ -45,25 +45,18 @@ public class PaymentsController : Controller
     [HttpPost]
     public async Task<ActionResult<PostPaymentResponse>> ProcessPayment(PostPaymentRequest request)
     {
-        try
+        var validatorResult = await _postPaymentRequestValidator.ValidateAsync(request);
+        if (!validatorResult.IsValid)
         {
-            var validatorResult = await _postPaymentRequestValidator.ValidateAsync(request);
-            if (!validatorResult.IsValid)
-            {
-                return new BadRequestObjectResult(validatorResult.Errors);
-            }
-            var payment = await _paymentService.ProcessPayment(request);
-            return payment.Status switch
-            {
-                PaymentStatus.Authorized => Ok(payment),
-                PaymentStatus.Declined => Ok(payment),
-                PaymentStatus.Rejected => BadRequest(payment),
-                _ => StatusCode(StatusCodes.Status500InternalServerError)
-            };
+            return new BadRequestObjectResult(validatorResult.Errors);
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.ServiceUnavailable)
+        var payment = await _paymentService.ProcessPayment(request);
+        return payment.Status switch
         {
-            return StatusCode(StatusCodes.Status503ServiceUnavailable);
-        }
+            PaymentStatus.Authorized => Ok(payment),
+            PaymentStatus.Declined => Ok(payment),
+            PaymentStatus.Rejected => BadRequest(payment),
+            _ => StatusCode(StatusCodes.Status500InternalServerError)
+        };
     }
 }
