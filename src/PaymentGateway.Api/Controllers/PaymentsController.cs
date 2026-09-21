@@ -31,6 +31,8 @@ public class PaymentsController : Controller
     }
 
     [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(PostPaymentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<PostPaymentResponse?> GetPayment(Guid id)
     {
         _logger.LogInformation("Retrieving payment {PaymentId}", id);
@@ -48,18 +50,24 @@ public class PaymentsController : Controller
     }
 
     [HttpPost]
-    public async Task<ActionResult<PostPaymentResponse>> ProcessPayment(PostPaymentRequest request)
+    [ProducesResponseType(typeof(PostPaymentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<PostPaymentResponse>> ProcessPayment(
+    PostPaymentRequest request)
     {
         _logger.LogInformation(
             "Processing payment request for {Amount} {Currency}",
             request.Amount, request.Currency);
 
         var validatorResult = await _postPaymentRequestValidator.ValidateAsync(request);
+
         if (!validatorResult.IsValid)
         {
             _logger.LogInformation(
                 "Payment request failed validation with {ErrorCount} error(s)",
                 validatorResult.Errors.Count);
+
             return new BadRequestObjectResult(validatorResult.Errors);
         }
 

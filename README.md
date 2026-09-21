@@ -80,6 +80,19 @@ docker compose up --build
 
 This starts the application, the bank simulator and a Datadog Agent.
 
+## Endpoints
+
+### Payment Gateway
+
+* [Swagger UI](https://localhost:7092/swagger/index.html) — API documentation and testing
+* `http://localhost:5067` — HTTP API
+* `https://localhost:7092` — HTTPS API
+
+### Bank Simulator
+
+* `http://localhost:8080` — Bank simulator
+* `http://localhost:2525` — Mountebank UI
+
 # Release Notes
 
 ## v2.0.0
