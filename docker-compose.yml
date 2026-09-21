@@ -1,15 +1,71 @@
-version: "3.8"
-
 services:
+  payment_gateway_api:
+    build:
+      context: src/PaymentGateway.Api
+      dockerfile: Dockerfile
+
+    ports:
+      - "5067:8080"
+      - "7092:8081"
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+
+      DD_SERVICE: payment-gateway-api
+      DD_ENV: dev
+      DD_VERSION: "2.0.0"
+
+      DD_AGENT_HOST: datadog_agent
+      DD_TRACE_AGENT_PORT: "8126"
+      DD_LOGS_INJECTION: "true"
+      DD_RUNTIME_METRICS_ENABLED: "true"
+
+      ASPNETCORE_Kestrel__Certificates__Default__Password: ${DOTNET_DEV_CERT_PASSWORD}
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnetapp.pfx
+
+    volumes:
+      - ${USERPROFILE}/.aspnet/https:/https:ro
+
+    labels:
+      com.datadoghq.ad.logs: '[{"source":"csharp","service":"payment-gateway-api"}]'
+
+    depends_on:
+      - bank_simulator
+      - datadog_agent
+
   bank_simulator:
     container_name: bank_simulator
     image: bbyars/mountebank:2.8.1
+
     ports:
       - "2525:2525"
       - "8080:8080"
+
     command: --configfile /imposters/bank_simulator.ejs --allowInjection
+
     volumes:
-      - type: bind
-        source: ./imposters
-        target: /imposters
-      
+      - ./imposters:/imposters
+
+  datadog_agent:
+    image: registry.datadoghq.com/agent:7
+    container_name: dd_agent
+
+    environment:
+      DD_API_KEY: ${DD_API_KEY}
+      DD_SITE: datadoghq.eu
+
+      DD_APM_ENABLED: "true"
+      DD_DOGSTATSD_NON_LOCAL_TRAFFIC: "true"
+
+      DD_LOGS_ENABLED: "true"
+      DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL: "true"
+
+    ports:
+      - "8126:8126"
+      - "8125:8125/udp"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
