@@ -26,7 +26,8 @@ namespace PaymentGateway.Api.MiddleWares
             {
                 _logger.LogError(
                     ex,
-                    "Bank simulator is unavailable.");
+                    "Bank simulator is unavailable. {Method} {Path}",
+                    context.Request.Method, context.Request.Path);
 
                 context.Response.StatusCode =
                     StatusCodes.Status503ServiceUnavailable;
@@ -35,7 +36,8 @@ namespace PaymentGateway.Api.MiddleWares
             {
                 _logger.LogError(
                     ex,
-                    "Unhandled exception.");
+                    "Unhandled exception while processing {Method} {Path}",
+                    context.Request.Method, context.Request.Path);
 
                 context.Response.StatusCode =
                     StatusCodes.Status500InternalServerError;

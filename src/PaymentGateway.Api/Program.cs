@@ -6,7 +6,19 @@ using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Services;
 using PaymentGateway.Api.Validators;
 
+using Serilog;
+using Serilog.Formatting.Compact;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("service", context.Configuration["DD_SERVICE"] ?? "payment-gateway-api")
+    .Enrich.WithProperty("env", context.Configuration["DD_ENV"] ?? context.HostingEnvironment.EnvironmentName)
+    .Enrich.WithProperty("version", context.Configuration["DD_VERSION"] ?? "unknown")
+    .WriteTo.Console(new CompactJsonFormatter()));
 
 // Add services to the container.
 
@@ -25,6 +37,8 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IValidator<PostPaymentRequest>, PostPaymentRequestValidator>();
 
 var app = builder.Build();
+
+app.UseSerilogRequestLogging();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
