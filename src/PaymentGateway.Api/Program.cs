@@ -1,5 +1,7 @@
 using FluentValidation;
 
+using Microsoft.OpenApi;
+
 using PaymentGateway.Api.Clients.Bank;
 using PaymentGateway.Api.MiddleWares;
 using PaymentGateway.Api.Models.Requests;
@@ -25,8 +27,14 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v2", new OpenApiInfo
+    {
+        Title = "Payment Gateway API",
+        Version = "2.0.0"
+    });
+});
 builder.Services.AddSingleton<IPaymentRepository, PaymentsRepository>();
 builder.Services.AddHttpClient<IBankClient, BankClient>()
     .ConfigureHttpClient(cfg =>
@@ -46,7 +54,13 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint(
+            "/swagger/v2/swagger.json",
+            "Payment Gateway API v2");
+    });
 }
 
 app.UseHttpsRedirection();
